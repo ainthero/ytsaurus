@@ -132,6 +132,7 @@ import tech.ytsaurus.client.request.WriteTable;
 import tech.ytsaurus.client.rows.ConsumerSource;
 import tech.ytsaurus.client.rows.ConsumerSourceRet;
 import tech.ytsaurus.client.rows.EntitySkiffSerializer;
+import tech.ytsaurus.client.rows.LookupRowsResult;
 import tech.ytsaurus.client.rows.QueueRowset;
 import tech.ytsaurus.client.rows.UnversionedRow;
 import tech.ytsaurus.client.rows.UnversionedRowset;
@@ -660,6 +661,85 @@ public class ApiServiceClientImpl implements ApiServiceClient, Closeable {
                     logger.trace("LookupRows incoming rowset descriptor: {}", response.body().getRowsetDescriptor());
                     return responseReader.apply(response);
                 }));
+    }
+
+    @Override
+    public <T> CompletableFuture<LookupRowsResult<List<T>>> lookupRowsWithResult(
+            AbstractLookupRowsRequest<?, ?> request,
+            YTreeRowSerializer<T> serializer
+    ) {
+        return onStarted(request, lookupRowsImpl(request, response -> {
+            final ConsumerSourceRet<T> result = ConsumerSource.list();
+            ApiServiceUtil.deserializeUnversionedRowset(response.body().getRowsetDescriptor(),
+                    response.attachments(), serializer, result, serializationResolver);
+            return new LookupRowsResult<>(result.get(), response.body().getUnavailableKeyIndexesList());
+        }));
+    }
+
+    @Override
+    public CompletableFuture<LookupRowsResult<UnversionedRowset>> lookupRowsWithResult(
+            AbstractLookupRowsRequest<?, ?> request
+    ) {
+        return onStarted(request, lookupRowsImpl(request, response -> {
+            UnversionedRowset rowset = ApiServiceUtil.deserializeUnversionedRowset(
+                    response.body().getRowsetDescriptor(), response.attachments());
+            return new LookupRowsResult<>(rowset, response.body().getUnavailableKeyIndexesList());
+        }));
+    }
+
+    @Override
+    public <T> CompletableFuture<List<LookupRowsResult<List<T>>>> multiLookupRowsWithResult(
+            MultiLookupRowsRequest request,
+            YTreeRowSerializer<T> serializer
+    ) {
+        return onStarted(request, multiLookupImpl(request, response -> multiLookupResponseReaderWithResult(
+                response,
+                (rowsetDescriptor, attachments, unavailableKeyIndexes) -> {
+                    final ConsumerSourceRet<T> result = ConsumerSource.list();
+                    ApiServiceUtil.deserializeUnversionedRowset(
+                            rowsetDescriptor,
+                            attachments,
+                            serializer,
+                            result,
+                            serializationResolver
+                    );
+                    return new LookupRowsResult<>(result.get(), unavailableKeyIndexes);
+                }
+        )));
+    }
+
+    @Override
+    public CompletableFuture<List<LookupRowsResult<UnversionedRowset>>> multiLookupRowsWithResult(
+            MultiLookupRowsRequest request
+    ) {
+        return onStarted(request, multiLookupImpl(request, response -> multiLookupResponseReaderWithResult(
+                response,
+                (rowsetDescriptor, attachments, unavailableKeyIndexes) -> {
+                    UnversionedRowset rowset = ApiServiceUtil.deserializeUnversionedRowset(
+                            rowsetDescriptor, attachments);
+                    return new LookupRowsResult<>(rowset, unavailableKeyIndexes);
+                }
+        )));
+    }
+
+    private <T> List<T> multiLookupResponseReaderWithResult(
+            RpcClientResponse<TRspMultiLookup> response,
+            TriFunction<TRowsetDescriptor, List<byte[]>, List<Integer>, T> resultDeserializer
+    ) {
+        List<T> result = new ArrayList<>(response.body().getSubresponsesCount());
+        int beginAttachmentIndex = 0;
+        for (var subresponse : response.body().getSubresponsesList()) {
+            int endAttachmentIndex = beginAttachmentIndex + subresponse.getAttachmentCount();
+            result.add(
+                    resultDeserializer.apply(
+                            subresponse.getRowsetDescriptor(),
+                            response.attachments().subList(beginAttachmentIndex, endAttachmentIndex),
+                            subresponse.getUnavailableKeyIndexesList()
+                    )
+            );
+            beginAttachmentIndex = endAttachmentIndex;
+        }
+        return result;
     }
 
     @Override

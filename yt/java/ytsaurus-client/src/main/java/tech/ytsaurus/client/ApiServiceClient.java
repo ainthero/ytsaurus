@@ -42,6 +42,7 @@ import tech.ytsaurus.client.request.ListQueueConsumerRegistrations;
 import tech.ytsaurus.client.request.ListQueueConsumerRegistrationsResult;
 import tech.ytsaurus.client.request.LookupRowsRequest;
 import tech.ytsaurus.client.request.MountTable;
+import tech.ytsaurus.client.request.MultiLookupRowsRequest;
 import tech.ytsaurus.client.request.PingTransaction;
 import tech.ytsaurus.client.request.PullConsumer;
 import tech.ytsaurus.client.request.Query;
@@ -62,8 +63,10 @@ import tech.ytsaurus.client.request.UnfreezeTable;
 import tech.ytsaurus.client.request.UnmountTable;
 import tech.ytsaurus.client.request.UpdateOperationParameters;
 import tech.ytsaurus.client.rows.ConsumerSource;
+import tech.ytsaurus.client.rows.LookupRowsResult;
 import tech.ytsaurus.client.rows.QueueRowset;
 import tech.ytsaurus.client.rows.UnversionedRow;
+import tech.ytsaurus.client.rows.UnversionedRowSerializer;
 import tech.ytsaurus.client.rows.UnversionedRowset;
 import tech.ytsaurus.client.rows.VersionedRowset;
 import tech.ytsaurus.core.GUID;
@@ -142,6 +145,68 @@ public interface ApiServiceClient extends TransactionalClient {
     default CompletableFuture<VersionedRowset> versionedLookupRows(
             LookupRowsRequest.BuilderBase<?> request, YtTimestamp timestamp) {
         return versionedLookupRows(request.setTimestamp(timestamp));
+    }
+
+    /**
+     * Lookup rows with partial result support.
+     * <p>
+     * Returns a LookupRowsResult that contains both the rowset and unavailable key indexes
+     * when enablePartialResult is set to true in the request.
+     */
+    <T> CompletableFuture<LookupRowsResult<List<T>>> lookupRowsWithResult(
+            AbstractLookupRowsRequest<?, ?> request,
+            YTreeRowSerializer<T> serializer
+    );
+
+    default <T> CompletableFuture<LookupRowsResult<List<T>>> lookupRowsWithResult(
+            AbstractLookupRowsRequest.Builder<?, ?> request,
+            YTreeRowSerializer<T> serializer
+    ) {
+        return lookupRowsWithResult(request.build(), serializer);
+    }
+
+    /**
+     * Lookup rows with partial result support, returning UnversionedRowset.
+     */
+    CompletableFuture<LookupRowsResult<UnversionedRowset>> lookupRowsWithResult(
+            AbstractLookupRowsRequest<?, ?> request
+    );
+
+    default CompletableFuture<LookupRowsResult<UnversionedRowset>> lookupRowsWithResult(
+            AbstractLookupRowsRequest.Builder<?, ?> request
+    ) {
+        return lookupRowsWithResult(request.build());
+    }
+
+    /**
+     * Multi lookup rows with partial result support.
+     * <p>
+     * Returns a list of LookupRowsResult that contains both the rowset and unavailable key indexes
+     * for each subrequest when enablePartialResult is set to true.
+     */
+    <T> CompletableFuture<List<LookupRowsResult<List<T>>>> multiLookupRowsWithResult(
+            MultiLookupRowsRequest request,
+            YTreeRowSerializer<T> serializer
+    );
+
+    default <T> CompletableFuture<List<LookupRowsResult<List<T>>>> multiLookupRowsWithResult(
+            MultiLookupRowsRequest.Builder request,
+            YTreeRowSerializer<T> serializer
+    ) {
+        return multiLookupRowsWithResult(request.build(), serializer);
+    }
+
+    /**
+     * Multi lookup rows with partial result support, returning UnversionedRowsets.
+     */
+    CompletableFuture<List<LookupRowsResult<UnversionedRowset>>> multiLookupRowsWithResult(
+            MultiLookupRowsRequest request
+    );
+
+    default CompletableFuture<List<LookupRowsResult<UnversionedRowset>>> multiLookupRowsWithResult(
+            MultiLookupRowsRequest.Builder request
+    ) {
+        return multiLookupRowsWithResult(request.build());
     }
 
     CompletableFuture<Void> modifyRows(GUID transactionId, AbstractModifyRowsRequest<?, ?> request);
