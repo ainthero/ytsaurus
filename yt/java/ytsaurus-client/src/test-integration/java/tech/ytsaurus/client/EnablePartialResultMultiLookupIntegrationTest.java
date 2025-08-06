@@ -39,34 +39,8 @@ public class EnablePartialResultMultiLookupIntegrationTest extends YTsaurusClien
 
     @Before
     public void setup() throws IOException {
-        GenericContainer<?> ytsaurusContainer = getYtsaurusContainer();
-        final int proxyPort = ytsaurusContainer != null
-                ? ytsaurusContainer.getMappedPort(80)
-                : Integer.parseInt(System.getenv("YT_PROXY").split(":")[1]);
-
-        final BusConnector connector = new DefaultBusConnector(new NioEventLoopGroup(0));
-
-        final String host = ytsaurusContainer != null ? ytsaurusContainer.getHost() : "localhost";
-
-        final String user = "root";
-        final String token = "";
-
-        yt = YTsaurusClient.builder()
-                .setSharedBusConnector(connector)
-                .setClusters(List.of(new YTsaurusCluster("local", host, proxyPort)))
-                .setPreferredClusterName("local")
-                .setAuth(YTsaurusClientAuth.builder()
-                        .setUser(user)
-                        .setToken(token)
-                        .build()
-                ).setRpcCompression(new RpcCompression(Compression.Zlib_6))
-                .setConfig(
-                        YTsaurusClientConfig.builder()
-                                .setRpcOptions(new RpcOptions())
-                                .build()
-                )
-                .disableValidation()
-                .build();
+        var ytFixture = createYtFixture();
+        yt = ytFixture.yt;
 
         yt.waitProxies().join();
 

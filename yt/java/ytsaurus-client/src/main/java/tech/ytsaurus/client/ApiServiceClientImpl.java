@@ -668,23 +668,23 @@ public class ApiServiceClientImpl implements ApiServiceClient, Closeable {
             AbstractLookupRowsRequest<?, ?> request,
             YTreeRowSerializer<T> serializer
     ) {
-        return onStarted(request, lookupRowsImpl(request, response -> {
+        return lookupRowsImpl(request, response -> {
             final ConsumerSourceRet<T> result = ConsumerSource.list();
             ApiServiceUtil.deserializeUnversionedRowset(response.body().getRowsetDescriptor(),
                     response.attachments(), serializer, result, serializationResolver);
             return new LookupRowsResult<>(result.get(), response.body().getUnavailableKeyIndexesList());
-        }));
+        });
     }
 
     @Override
     public CompletableFuture<LookupRowsResult<UnversionedRowset>> lookupRowsWithResult(
             AbstractLookupRowsRequest<?, ?> request
     ) {
-        return onStarted(request, lookupRowsImpl(request, response -> {
+        return lookupRowsImpl(request, response -> {
             UnversionedRowset rowset = ApiServiceUtil.deserializeUnversionedRowset(
                     response.body().getRowsetDescriptor(), response.attachments());
             return new LookupRowsResult<>(rowset, response.body().getUnavailableKeyIndexesList());
-        }));
+        });
     }
 
     @Override
@@ -692,7 +692,7 @@ public class ApiServiceClientImpl implements ApiServiceClient, Closeable {
             MultiLookupRowsRequest request,
             YTreeRowSerializer<T> serializer
     ) {
-        return onStarted(request, multiLookupImpl(request, response -> multiLookupResponseReaderWithResult(
+        return multiLookupImpl(request, response -> multiLookupResponseReaderWithResult(
                 response,
                 (rowsetDescriptor, attachments, unavailableKeyIndexes) -> {
                     final ConsumerSourceRet<T> result = ConsumerSource.list();
@@ -705,21 +705,21 @@ public class ApiServiceClientImpl implements ApiServiceClient, Closeable {
                     );
                     return new LookupRowsResult<>(result.get(), unavailableKeyIndexes);
                 }
-        )));
+        ));
     }
 
     @Override
     public CompletableFuture<List<LookupRowsResult<UnversionedRowset>>> multiLookupRowsWithResult(
             MultiLookupRowsRequest request
     ) {
-        return onStarted(request, multiLookupImpl(request, response -> multiLookupResponseReaderWithResult(
+        return multiLookupImpl(request, response -> multiLookupResponseReaderWithResult(
                 response,
                 (rowsetDescriptor, attachments, unavailableKeyIndexes) -> {
                     UnversionedRowset rowset = ApiServiceUtil.deserializeUnversionedRowset(
                             rowsetDescriptor, attachments);
                     return new LookupRowsResult<>(rowset, unavailableKeyIndexes);
                 }
-        )));
+        ));
     }
 
     private <T> List<T> multiLookupResponseReaderWithResult(
