@@ -120,7 +120,7 @@ public class EnablePartialResultMultiLookupIntegrationTest extends YTsaurusClien
                 .addSubrequest(subrequest2)
                 .build();
 
-        List<LookupRowsResult<UnversionedRowset>> results = yt.multiLookupRowsWithResult(request).join();
+        List<LookupRowsResult<UnversionedRowset>> results = yt.multiLookupRowsWithPartialResult(request).join();
 
         Assert.assertEquals("Should have 2 results", 2, results.size());
 
@@ -162,7 +162,7 @@ public class EnablePartialResultMultiLookupIntegrationTest extends YTsaurusClien
                 .addSubrequest(subrequest)
                 .build();
 
-        List<LookupRowsResult<UnversionedRowset>> results = yt.multiLookupRowsWithResult(request).join();
+        List<LookupRowsResult<UnversionedRowset>> results = yt.multiLookupRowsWithPartialResult(request).join();
 
         Assert.assertEquals("Should have 1 result", 1, results.size());
 
@@ -196,7 +196,7 @@ public class EnablePartialResultMultiLookupIntegrationTest extends YTsaurusClien
                 .addSubrequest(subrequestWithoutPartial)
                 .build();
 
-        List<LookupRowsResult<UnversionedRowset>> results = yt.multiLookupRowsWithResult(request).join();
+        List<LookupRowsResult<UnversionedRowset>> results = yt.multiLookupRowsWithPartialResult(request).join();
 
         Assert.assertEquals("Should have 2 results", 2, results.size());
 

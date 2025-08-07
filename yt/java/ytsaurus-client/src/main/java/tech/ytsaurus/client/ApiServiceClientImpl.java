@@ -664,7 +664,7 @@ public class ApiServiceClientImpl implements ApiServiceClient, Closeable {
     }
 
     @Override
-    public <T> CompletableFuture<LookupRowsResult<List<T>>> lookupRowsWithResult(
+    public <T> CompletableFuture<LookupRowsResult<List<T>>> lookupRowsWithPartialResult(
             AbstractLookupRowsRequest<?, ?> request,
             YTreeRowSerializer<T> serializer
     ) {
@@ -677,7 +677,7 @@ public class ApiServiceClientImpl implements ApiServiceClient, Closeable {
     }
 
     @Override
-    public CompletableFuture<LookupRowsResult<UnversionedRowset>> lookupRowsWithResult(
+    public CompletableFuture<LookupRowsResult<UnversionedRowset>> lookupRowsWithPartialResult(
             AbstractLookupRowsRequest<?, ?> request
     ) {
         return lookupRowsImpl(request, response -> {
@@ -688,7 +688,7 @@ public class ApiServiceClientImpl implements ApiServiceClient, Closeable {
     }
 
     @Override
-    public <T> CompletableFuture<List<LookupRowsResult<List<T>>>> multiLookupRowsWithResult(
+    public <T> CompletableFuture<List<LookupRowsResult<List<T>>>> multiLookupRowsWithPartialResult(
             MultiLookupRowsRequest request,
             YTreeRowSerializer<T> serializer
     ) {
@@ -709,7 +709,7 @@ public class ApiServiceClientImpl implements ApiServiceClient, Closeable {
     }
 
     @Override
-    public CompletableFuture<List<LookupRowsResult<UnversionedRowset>>> multiLookupRowsWithResult(
+    public CompletableFuture<List<LookupRowsResult<UnversionedRowset>>> multiLookupRowsWithPartialResult(
             MultiLookupRowsRequest request
     ) {
         return multiLookupImpl(request, response -> multiLookupResponseReaderWithResult(

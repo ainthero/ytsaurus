@@ -153,29 +153,29 @@ public interface ApiServiceClient extends TransactionalClient {
      * Returns a LookupRowsResult that contains both the rowset and unavailable key indexes
      * when enablePartialResult is set to true in the request.
      */
-    <T> CompletableFuture<LookupRowsResult<List<T>>> lookupRowsWithResult(
+    <T> CompletableFuture<LookupRowsResult<List<T>>> lookupRowsWithPartialResult(
             AbstractLookupRowsRequest<?, ?> request,
             YTreeRowSerializer<T> serializer
     );
 
-    default <T> CompletableFuture<LookupRowsResult<List<T>>> lookupRowsWithResult(
+    default <T> CompletableFuture<LookupRowsResult<List<T>>> lookupRowsWithPartialResult(
             AbstractLookupRowsRequest.Builder<?, ?> request,
             YTreeRowSerializer<T> serializer
     ) {
-        return lookupRowsWithResult(request.build(), serializer);
+        return lookupRowsWithPartialResult(request.build(), serializer);
     }
 
     /**
      * Lookup rows with partial result support, returning UnversionedRowset.
      */
-    CompletableFuture<LookupRowsResult<UnversionedRowset>> lookupRowsWithResult(
+    CompletableFuture<LookupRowsResult<UnversionedRowset>> lookupRowsWithPartialResult(
             AbstractLookupRowsRequest<?, ?> request
     );
 
-    default CompletableFuture<LookupRowsResult<UnversionedRowset>> lookupRowsWithResult(
+    default CompletableFuture<LookupRowsResult<UnversionedRowset>> lookupRowsWithPartialResult(
             AbstractLookupRowsRequest.Builder<?, ?> request
     ) {
-        return lookupRowsWithResult(request.build());
+        return lookupRowsWithPartialResult(request.build());
     }
 
     /**
@@ -184,29 +184,29 @@ public interface ApiServiceClient extends TransactionalClient {
      * Returns a list of LookupRowsResult that contains both the rowset and unavailable key indexes
      * for each subrequest when enablePartialResult is set to true.
      */
-    <T> CompletableFuture<List<LookupRowsResult<List<T>>>> multiLookupRowsWithResult(
+    <T> CompletableFuture<List<LookupRowsResult<List<T>>>> multiLookupRowsWithPartialResult(
             MultiLookupRowsRequest request,
             YTreeRowSerializer<T> serializer
     );
 
-    default <T> CompletableFuture<List<LookupRowsResult<List<T>>>> multiLookupRowsWithResult(
+    default <T> CompletableFuture<List<LookupRowsResult<List<T>>>> multiLookupRowsWithPartialResult(
             MultiLookupRowsRequest.Builder request,
             YTreeRowSerializer<T> serializer
     ) {
-        return multiLookupRowsWithResult(request.build(), serializer);
+        return multiLookupRowsWithPartialResult(request.build(), serializer);
     }
 
     /**
      * Multi lookup rows with partial result support, returning UnversionedRowsets.
      */
-    CompletableFuture<List<LookupRowsResult<UnversionedRowset>>> multiLookupRowsWithResult(
+    CompletableFuture<List<LookupRowsResult<UnversionedRowset>>> multiLookupRowsWithPartialResult(
             MultiLookupRowsRequest request
     );
 
-    default CompletableFuture<List<LookupRowsResult<UnversionedRowset>>> multiLookupRowsWithResult(
+    default CompletableFuture<List<LookupRowsResult<UnversionedRowset>>> multiLookupRowsWithPartialResult(
             MultiLookupRowsRequest.Builder request
     ) {
-        return multiLookupRowsWithResult(request.build());
+        return multiLookupRowsWithPartialResult(request.build());
     }
 
     CompletableFuture<Void> modifyRows(GUID transactionId, AbstractModifyRowsRequest<?, ?> request);

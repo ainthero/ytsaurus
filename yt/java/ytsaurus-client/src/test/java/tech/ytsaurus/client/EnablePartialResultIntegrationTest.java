@@ -30,7 +30,7 @@ public class EnablePartialResultIntegrationTest {
             .build();
 
     @Test
-    public void testLookupRowsWithResultReturnsCorrectData() {
+    public void testLookupRowsWithPartialResultReturnsCorrectData() {
         MockYTsaurusClient mockClient = new MockYTsaurusClient("test");
         
         // Mock data with partial results
@@ -42,7 +42,7 @@ public class EnablePartialResultIntegrationTest {
         LookupRowsResult<List<YTreeNode>> expectedResult = 
             new LookupRowsResult<>(expectedRowset, expectedUnavailableKeys);
 
-        mockClient.mockMethod("lookupRowsWithResult", () -> CompletableFuture.completedFuture(expectedResult));
+        mockClient.mockMethod("lookupRowsWithPartialResult", () -> CompletableFuture.completedFuture(expectedResult));
 
         LookupRowsRequest request = LookupRowsRequest.builder()
                 .setPath(path)
@@ -56,7 +56,7 @@ public class EnablePartialResultIntegrationTest {
                 .build();
 
         CompletableFuture<LookupRowsResult<List<YTreeMapNode>>> result = 
-            mockClient.lookupRowsWithResult(request, new YTreeMapNodeSerializer());
+            mockClient.lookupRowsWithPartialResult(request, new YTreeMapNodeSerializer());
 
         LookupRowsResult<List<YTreeMapNode>> actualResult = result.join();
         assertEquals("Should return correct rowset", expectedRowset, actualResult.getRowset());
@@ -67,7 +67,7 @@ public class EnablePartialResultIntegrationTest {
     }
 
     @Test
-    public void testLookupRowsWithResultWithoutPartialResult() {
+    public void testLookupRowsWithPartialResultWithoutPartialResult() {
         MockYTsaurusClient mockClient = new MockYTsaurusClient("test");
         
         // Mock data without partial results  
@@ -79,7 +79,7 @@ public class EnablePartialResultIntegrationTest {
         LookupRowsResult<List<YTreeNode>> expectedResult = 
             new LookupRowsResult<>(expectedRowset, Arrays.asList());
 
-        mockClient.mockMethod("lookupRowsWithResult", () -> CompletableFuture.completedFuture(expectedResult));
+        mockClient.mockMethod("lookupRowsWithPartialResult", () -> CompletableFuture.completedFuture(expectedResult));
 
         LookupRowsRequest request = LookupRowsRequest.builder()
                 .setPath(path)
@@ -91,7 +91,7 @@ public class EnablePartialResultIntegrationTest {
                 .build();
 
         CompletableFuture<LookupRowsResult<List<YTreeMapNode>>> result = 
-            mockClient.lookupRowsWithResult(request, new YTreeMapNodeSerializer());
+            mockClient.lookupRowsWithPartialResult(request, new YTreeMapNodeSerializer());
 
         LookupRowsResult<List<YTreeMapNode>> actualResult = result.join();
         assertEquals("Should return correct rowset", expectedRowset, actualResult.getRowset());
@@ -100,7 +100,7 @@ public class EnablePartialResultIntegrationTest {
     }
 
     @Test
-    public void testLookupRowsWithResultUnversionedRowset() {
+    public void testLookupRowsWithPartialResultUnversionedRowset() {
         MockYTsaurusClient mockClient = new MockYTsaurusClient("test");
         
         // Mock UnversionedRowset result
@@ -109,7 +109,7 @@ public class EnablePartialResultIntegrationTest {
         LookupRowsResult<UnversionedRowset> expectedResult = 
             new LookupRowsResult<>(expectedRowset, expectedUnavailableKeys);
 
-        mockClient.mockMethod("lookupRowsWithResult", () -> CompletableFuture.completedFuture(expectedResult));
+        mockClient.mockMethod("lookupRowsWithPartialResult", () -> CompletableFuture.completedFuture(expectedResult));
 
         LookupRowsRequest request = LookupRowsRequest.builder()
                 .setPath(path)
@@ -121,7 +121,7 @@ public class EnablePartialResultIntegrationTest {
                 .build();
 
         CompletableFuture<LookupRowsResult<UnversionedRowset>> result = 
-            mockClient.lookupRowsWithResult(request);
+            mockClient.lookupRowsWithPartialResult(request);
 
         LookupRowsResult<UnversionedRowset> actualResult = result.join();
         assertEquals("Should return correct rowset", expectedRowset, actualResult.getRowset());
@@ -131,7 +131,7 @@ public class EnablePartialResultIntegrationTest {
     }
 
     @Test
-    public void testMultiLookupRowsWithResult() {
+    public void testMultiLookupRowsWithPartialResult() {
         MockYTsaurusClient mockClient = new MockYTsaurusClient("test");
         
         // Mock multi lookup data with partial results
@@ -149,7 +149,7 @@ public class EnablePartialResultIntegrationTest {
                 )
         );
 
-        mockClient.mockMethod("multiLookupRowsWithResult", () -> CompletableFuture.completedFuture(expectedResults));
+        mockClient.mockMethod("multiLookupRowsWithPartialResult", () -> CompletableFuture.completedFuture(expectedResults));
 
         MultiLookupRowsRequest request = new MultiLookupRowsRequest().toBuilder()
                 .addSubrequest(MultiLookupRowsSubrequest.builder()
@@ -169,7 +169,7 @@ public class EnablePartialResultIntegrationTest {
                 .build();
 
         CompletableFuture<List<LookupRowsResult<List<YTreeMapNode>>>> result = 
-            mockClient.multiLookupRowsWithResult(request, new YTreeMapNodeSerializer());
+            mockClient.multiLookupRowsWithPartialResult(request, new YTreeMapNodeSerializer());
 
         List<LookupRowsResult<List<YTreeMapNode>>> actualResults = result.join();
         assertEquals("Should return correct number of results", 2, actualResults.size());

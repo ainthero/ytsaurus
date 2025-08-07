@@ -385,33 +385,33 @@ public class MockYTsaurusClient implements BaseYTsaurusClient {
     }
 
     @Override
-    public <T> CompletableFuture<LookupRowsResult<List<T>>> lookupRowsWithResult(
+    public <T> CompletableFuture<LookupRowsResult<List<T>>> lookupRowsWithPartialResult(
             AbstractLookupRowsRequest<?, ?> request,
             YTreeRowSerializer<T> serializer
     ) {
-        return (CompletableFuture<LookupRowsResult<List<T>>>) callMethod("lookupRowsWithResult");
+        return (CompletableFuture<LookupRowsResult<List<T>>>) callMethod("lookupRowsWithPartialResult");
     }
 
     @Override
-    public CompletableFuture<LookupRowsResult<UnversionedRowset>> lookupRowsWithResult(
+    public CompletableFuture<LookupRowsResult<UnversionedRowset>> lookupRowsWithPartialResult(
             AbstractLookupRowsRequest<?, ?> request
     ) {
-        return (CompletableFuture<LookupRowsResult<UnversionedRowset>>) callMethod("lookupRowsWithResult");
+        return (CompletableFuture<LookupRowsResult<UnversionedRowset>>) callMethod("lookupRowsWithPartialResult");
     }
 
     @Override
-    public <T> CompletableFuture<List<LookupRowsResult<List<T>>>> multiLookupRowsWithResult(
+    public <T> CompletableFuture<List<LookupRowsResult<List<T>>>> multiLookupRowsWithPartialResult(
             MultiLookupRowsRequest request,
             YTreeRowSerializer<T> serializer
     ) {
-        return (CompletableFuture<List<LookupRowsResult<List<T>>>>) callMethod("multiLookupRowsWithResult");
+        return (CompletableFuture<List<LookupRowsResult<List<T>>>>) callMethod("multiLookupRowsWithPartialResult");
     }
 
     @Override
-    public CompletableFuture<List<LookupRowsResult<UnversionedRowset>>> multiLookupRowsWithResult(
+    public CompletableFuture<List<LookupRowsResult<UnversionedRowset>>> multiLookupRowsWithPartialResult(
             MultiLookupRowsRequest request
     ) {
-        return (CompletableFuture<List<LookupRowsResult<UnversionedRowset>>>) callMethod("multiLookupRowsWithResult");
+        return (CompletableFuture<List<LookupRowsResult<UnversionedRowset>>>) callMethod("multiLookupRowsWithPartialResult");
     }
 
     @Override
