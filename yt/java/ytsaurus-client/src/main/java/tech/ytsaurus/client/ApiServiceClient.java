@@ -179,6 +179,22 @@ public interface ApiServiceClient extends TransactionalClient {
     }
 
     /**
+     * Versioned lookup rows with partial result support.
+     * <p>
+     * Returns a LookupRowsResult that contains both the versioned rowset and unavailable key indexes
+     * when enablePartialResult is set to true in the request.
+     */
+    CompletableFuture<LookupRowsResult<VersionedRowset>> versionedLookupRowsWithPartialResult(
+            AbstractLookupRowsRequest<?, ?> request
+    );
+
+    default CompletableFuture<LookupRowsResult<VersionedRowset>> versionedLookupRowsWithPartialResult(
+            AbstractLookupRowsRequest.Builder<?, ?> request
+    ) {
+        return versionedLookupRowsWithPartialResult(request.build());
+    }
+
+    /**
      * Multi lookup rows with partial result support.
      * <p>
      * Returns a list of LookupRowsResult that contains both the rowset and unavailable key indexes

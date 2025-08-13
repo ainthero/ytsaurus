@@ -818,6 +818,17 @@ public class ApiServiceClientImpl implements ApiServiceClient, Closeable {
                 .deserializeVersionedRowset(response.body().getRowsetDescriptor(), response.attachments())));
     }
 
+    @Override
+    public CompletableFuture<LookupRowsResult<VersionedRowset>> versionedLookupRowsWithPartialResult(
+            AbstractLookupRowsRequest<?, ?> request
+    ) {
+        return versionedLookupRowsImpl(request, response -> {
+            VersionedRowset rowset = ApiServiceUtil.deserializeVersionedRowset(
+                    response.body().getRowsetDescriptor(), response.attachments());
+            return new LookupRowsResult<>(rowset, response.body().getUnavailableKeyIndexesList());
+        });
+    }
+
     private <T> CompletableFuture<T> versionedLookupRowsImpl(
             AbstractLookupRowsRequest<?, ?> request,
             Function<RpcClientResponse<TRspVersionedLookupRows>, T> responseReader
