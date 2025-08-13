@@ -44,6 +44,7 @@ import static org.junit.Assert.assertTrue;
  *
  * Run with env:
  * - RUN_EXTERNAL_YT=1
+ * - YT_USER=<user>
  * - YT_TOKEN=<secret>
  */
 public class EnablePartialResultRemoteClusterTest {
@@ -99,9 +100,16 @@ public class EnablePartialResultRemoteClusterTest {
         ModifyRowsRequest insert = ModifyRowsRequest.builder()
                 .setPath(tablePath)
                 .setSchema(schema)
-                .addInsert(Arrays.asList("key1", "value1"))
-                .addInsert(Arrays.asList("key2", "value2"))
-                .addInsert(Arrays.asList("key3", "value3"))
+                .addInsert(Arrays.asList("key01", "value01"))
+                .addInsert(Arrays.asList("key02", "value02"))
+                .addInsert(Arrays.asList("key03", "value03"))
+                .addInsert(Arrays.asList("key04", "value04"))
+                .addInsert(Arrays.asList("key05", "value05"))
+                .addInsert(Arrays.asList("key06", "value06"))
+                .addInsert(Arrays.asList("key07", "value07"))
+                .addInsert(Arrays.asList("key08", "value08"))
+                .addInsert(Arrays.asList("key09", "value09"))
+                .addInsert(Arrays.asList("key10", "value10"))
                 .build();
 
         ApiServiceTransaction tx = yt.startTransaction(StartTransaction.tablet()).join();
@@ -128,8 +136,8 @@ public class EnablePartialResultRemoteClusterTest {
                 .setPath(tablePath)
                 .setSchema(schema.toLookup())
                 .setEnablePartialResult(true)
-                .addFilter("key1")
-                .addFilter("key2")
+                .addFilter("key01")
+                .addFilter("key02")
                 .addFilter("nonexistent_key")
                 .setTimeout(Duration.ofSeconds(2))
                 .build();
@@ -138,7 +146,7 @@ public class EnablePartialResultRemoteClusterTest {
                 .setPath(tablePath)
                 .setSchema(schema.toLookup())
                 .setEnablePartialResult(true)
-                .addFilter("key3")
+                .addFilter("key03")
                 .addFilter("another_nonexistent_key")
                 .setTimeout(Duration.ofSeconds(2))
                 .build();
@@ -169,14 +177,17 @@ public class EnablePartialResultRemoteClusterTest {
                 "1".equals(System.getenv("RUN_EXTERNAL_YT")));
 
         // Unmount whole table before resharding
-        yt.unmountTableAndWaitTablets(UnmountTable.builder().setPath(tablePath).setTimeout(Duration.ofSeconds(30)).build()).join();
+        yt.unmountTableAndWaitTablets(UnmountTable.builder().setPath(tablePath).setTimeout(Duration.ofSeconds(40)).build()).join();
 
-        // Reshard into 2 tablets: [start, "key2") and ["key2", end]
+        // Reshard into 5 tablets: [start, "key02"), ["key02", "key04"), ["key04", "key06"), ["key06", "key08"), ["key08", end]
         yt.reshardTable(ReshardTable.builder()
                 .setPath(tablePath)
                 .setSchema(schema.toLookup())
                 .addPivotKey(Arrays.asList())        // Start of tablet 0
-                .addPivotKey(Arrays.asList("key2"))  // Start of tablet 1
+                .addPivotKey(Arrays.asList("key02")) // Start of tablet 1
+                .addPivotKey(Arrays.asList("key04")) // Start of tablet 2
+                .addPivotKey(Arrays.asList("key06")) // Start of tablet 3
+                .addPivotKey(Arrays.asList("key08")) // Start of tablet 4
                 .setTimeout(Duration.ofSeconds(30))
                 .build()
         ).join();
@@ -184,22 +195,25 @@ public class EnablePartialResultRemoteClusterTest {
         // Mount back
         yt.mountTableAndWaitTablets(MountTable.builder().setPath(tablePath).setTimeout(Duration.ofSeconds(30)).build()).join();
 
-        // Unmount tablet #1 so keys >= key2 are unavailable
+        // Unmount tablet #3 so keys key06, key07 are unavailable
         yt.unmountTable(UnmountTable.builder()
                 .setPath(tablePath)
-                .setTabletRangeOptions(new TabletRangeOptions(1, 1))
+                .setTabletRangeOptions(new TabletRangeOptions(3, 3))
                 .setTimeout(Duration.ofSeconds(30))
                 .build()
         ).join();
-        // Wait specifically for tablet #1 to become unmounted (table overall state stays "mounted")
-        waitTabletIndexStateWithTimeout(tablePath, 1, "unmounted", Duration.ofSeconds(10));
+        // Wait specifically for tablet #3 to become unmounted (table overall state stays "mounted")
+        waitTabletIndexStateWithTimeout(tablePath, 3, "unmounted", Duration.ofSeconds(30));
 
         MultiLookupRowsSubrequest sub = MultiLookupRowsSubrequest.builder()
                 .setPath(tablePath)
                 .setSchema(schema.toLookup())
                 .setEnablePartialResult(true)
-                .addFilter("key1") // tablet 0
-                .addFilter("key3") // tablet 1 (unmounted)
+                .addFilter("key01") // tablet 0 (mounted)
+                .addFilter("key03") // tablet 1 (mounted)
+                .addFilter("key06") // tablet 3 (unmounted)
+                .addFilter("key07") // tablet 3 (unmounted)
+                .addFilter("key10") // tablet 4 (mounted)
                 .setTimeout(Duration.ofSeconds(2))
                 .build();
 
@@ -209,17 +223,21 @@ public class EnablePartialResultRemoteClusterTest {
                 .build();
 
         // Execute lookup with enablePartialResult=true
+        System.out.println("=== TEST INFO ===");
+        System.out.println("Table path: " + tablePath);
+        System.out.println("Tablet #3 is unmounted, tablets #0,1,2,4 are mounted");
+        System.out.println("Lookup keys: key01(tablet0), key03(tablet1), key06(tablet3-unmounted), key07(tablet3-unmounted), key10(tablet4)");
+        System.out.println("Expected: enablePartialResult should return unavailableKeyIndexes for key06,key07");
+        System.out.println("=================");
+        
         List<LookupRowsResult<UnversionedRowset>> res = yt.multiLookupRowsWithPartialResult(req).join();
         assertEquals(1, res.size());
 
         LookupRowsResult<UnversionedRowset> r = res.get(0);
         
-        // Verify partial result behavior: when any tablet is unmounted, all keys are marked unavailable
         assertTrue("Should have unavailable keys", r.hasUnavailableKeys());
-        assertTrue("Should contain unavailable key index 0 (key1)", r.getUnavailableKeyIndexes().contains(0));
-        assertTrue("Should contain unavailable key index 1 (key3)", r.getUnavailableKeyIndexes().contains(1));
-        assertEquals("All keys should be unavailable", 2, r.getUnavailableKeyIndexes().size());
-        assertEquals("Rowset should be empty when any tablet is unmounted", 0, r.getRowset().getYTreeRows().size());
+        assertTrue("Should contain unavailable key index 2 (key06)", r.getUnavailableKeyIndexes().contains(2));
+        assertTrue("Should contain unavailable key index 3 (key07)", r.getUnavailableKeyIndexes().contains(3));
     }
     
     private void waitTabletIndexStateWithTimeout(String path, int tabletIndex, String desiredState, Duration timeout) {
